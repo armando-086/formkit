@@ -8,3 +8,4 @@ abstract interface class IFieldController<P, V> implements IDisposable {
   Stream<FieldState> get stateStream;
   FieldState get state; 
 }
+

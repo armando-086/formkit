@@ -122,7 +122,7 @@ class ControllerFactoryImpl implements IControllerFactory {
 
   // . Obtiene el DTO mapeado (flush). Delega al IFormController activo.
   @override
-  Future<TOutputVO?> flush<TOutputVO>() async {
+  Future<TOutputVO?> validatedFlush<TOutputVO>() async {
     // . Resuelve el IFormController activo para esta entidad/DTO desde el Service Locator.
     // . Se asume que TOutputVO es el tipo de TEntity registrado para este formulario.
     final formController =
