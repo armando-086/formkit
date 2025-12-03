@@ -15,8 +15,14 @@ dependencies:
   equatable: ^2.0.7
   rxdart: ^0.28.0
   meta: ^1.15.0
+  
   # Dependencias internas para el generador (VO analysis)
   collection: ^1.18.0
+  build: ^4.0.0
+  source_gen: ^4.0.0
+  analyzer: ^8.4.1 
+  build_config: ^1.1.2
+  glob: ^2.1.2
   
 dev_dependencies:
   flutter_test:
@@ -26,9 +32,5 @@ dev_dependencies:
   
   # ******* DEPENDENCIAS DE CODE GENERATION *******
   build_runner: ^2.10.0
-  build: ^4.0.0
-  source_gen: ^4.0.0
-  analyzer: ^8.4.1 # ✅ CORREGIDO: Compatible con build ^4.0.0
-  glob: ^2.1.2
   
 flutter:

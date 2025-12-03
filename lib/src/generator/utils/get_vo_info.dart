@@ -1,4 +1,4 @@
-// ignore_for_file: depend_on_referenced_packages
+// ignore_for_file: depend_on_referenced_packages, deprecated_member_use
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:formkit/src/generator/utils/field_info.dart';
@@ -8,7 +8,8 @@ import 'package:collection/collection.dart';
 FieldInfo getVoInfo(FieldElement field) {
   final FieldElement f = field;
 
-  final String voType = f.type.getDisplayString();
+  // ✅ CORRECCIÓN 1: Agregar withNullability: true
+  final String voType = f.type.getDisplayString(withNullability: true);
 
   // 1. Verificar si el campo implementa o extiende ValueObject
   if (valueObjectChecker.isAssignableFromType(f.type) &&
@@ -22,8 +23,9 @@ FieldInfo getVoInfo(FieldElement field) {
 
     if (voSuperType != null && voSuperType is InterfaceType) {
       if (voSuperType.typeArguments.isNotEmpty) {
+        // ✅ CORRECCIÓN 2: Agregar withNullability: true
         final primitiveType = voSuperType.typeArguments.first
-            .getDisplayString();
+            .getDisplayString(withNullability: true);
         return FieldInfo.vo(primitiveType, voType);
       }
     }

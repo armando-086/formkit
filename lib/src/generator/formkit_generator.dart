@@ -1,40 +1,42 @@
 // ignore_for_file: depend_on_referenced_packages, unnecessary_import
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:formkit/src/generator/utils/field_info.dart';
-import 'package:formkit/src/generator/utils/get_vo_info.dart';
-import 'package:source_gen/source_gen.dart';
 
-//. El TypeChecker debe usar la nueva anotación
-const _formKitTargetChecker = TypeChecker.fromUrl(
-  'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget', 
+import 'package:build/build.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart'; // Contiene TypeChecker, InvalidGenerationSourceError, GeneratorForAnnotation, ConstantReader
+import 'package:formkit/src/generator/annotation/formkit_target.dart';
+import 'package:formkit/src/generator/utils/get_vo_info.dart';
+import 'package:formkit/src/generator/utils/field_info.dart';
+
+
+const formKitTargetChecker = TypeChecker.fromUrl(
+  'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget',
 );
 
-class FormKitGenerator extends Generator {
+
+class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
   const FormKitGenerator();
-  
+
   @override
-  Future<String?> generate(LibraryReader library, BuildStep buildStep) async {
-    // Buscar clases anotadas con @FormKitTarget
-    for (final element in library.classes) {
-      if (!_formKitTargetChecker.hasAnnotationOfExact(element)) continue;
-
-      // Procesar esta clase
-      return _generateFor(element, buildStep);
-    }
-
-    return null; // Nada que generar
-  }
-
-  Future<String?> _generateFor(
-    ClassElement outputClass,
+  // ✅ CORREGIDO: Uso de la firma correcta para GeneratorForAnnotation
+  Future<String> generateForAnnotatedElement(
+    Element element,
+    ConstantReader annotation,
     BuildStep buildStep,
   ) async {
+    // 1. Validación y Extracción de Clases
+    if (element is! ClassElement) {
+      throw InvalidGenerationSourceError(
+        'La anotación @FormKitTarget solo puede aplicarse a clases.',
+        element: element,
+      );
+    }
+    
+    final ClassElement outputClass = element;
     final String? outputClassName = outputClass.name;
     final String generatedConfigName = '\$${outputClassName}FormConfig';
     final String generatedMapperName = '_${outputClassName}Mapper';
-    final String generatedAccessName = '${outputClassName}FormKit'; // Nombre simplificado para el desarrollador
-
+    final String generatedAccessName = '${outputClassName}FormKit';
+    
     final String mapperContract = 'IFormMapper<$outputClassName>';
     final String accessContract = 'IFormKitAccess<$outputClassName>';
 
@@ -54,16 +56,18 @@ class FormKitGenerator extends Generator {
     // --------------------------------------------------------------
     // HEADERS
     // --------------------------------------------------------------
-
     buffer.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
     buffer.writeln("// ignore_for_file: depend_on_referenced_packages, unnecessary_import");
+    buffer.writeln("import 'dart:async';");
     buffer.writeln("import 'package:flutter/widgets.dart';");
     buffer.writeln("import 'package:formkit/formkit.dart';");
     buffer.writeln("import 'package:formkit/src/flutter/core/contracts/icontroller_factory.dart';");
     buffer.writeln("import 'package:formkit/src/flutter/core/contracts/iformkit_access.dart';");
     buffer.writeln("import 'package:formkit/src/flutter/core/field_controller.dart';");
+    buffer.writeln("import 'package:formkit/src/mapping/services/value_object_converter.dart';");
+    buffer.writeln("import 'package:formkit/src/mapping/services/default_value_converter.dart';");
 
-    // Importar entidad original
+    // Importar entidad original (calculando el path)
     final packageName = buildStep.inputId.package;
     final inputPath = buildStep.inputId.path;
     final relativePath = inputPath.startsWith('lib/')
@@ -78,7 +82,7 @@ class FormKitGenerator extends Generator {
     // --------------------------------------------------------------
 
     buffer.writeln('/// Configuración de formulario generada para $outputClassName');
-    buffer.writeln('class $generatedConfigName implements IFormSchema<$outputClassName> {'); // IFormSchema en lugar de IFormConfig
+    buffer.writeln('class $generatedConfigName implements IFormSchema<$outputClassName> {');
     buffer.writeln('  const $generatedConfigName();');
     buffer.writeln('');
     buffer.writeln('  @override');
@@ -89,17 +93,14 @@ class FormKitGenerator extends Generator {
 
     for (final field in fields) {
       final fieldName = field.name;
-      final FieldInfo info = getVoInfo(field);
+      final FieldInfo info = getVoInfo(field); // Asume que getVoInfo está corregido (ver abajo)
 
-      // Usamos el fromValue estático del VO como valueConverter, según v12.
       final String converter;
       final String voType = info.voType;
       final String primitiveType = info.primitiveType;
       
       if (info.isValueObject) {
-         // Uso directo del método estático fromValue, asumiendo que el VO tiene la lógica.
-         // Esto simplifica la configuración al Core Engine.
-         converter = 
+          converter = 
             'ValueObjectConverter<$primitiveType, $voType>((p) => $voType.fromValue(p as $primitiveType))'; 
       } else {
         converter = 'DefaultValueConverter<$voType>()';
@@ -108,8 +109,6 @@ class FormKitGenerator extends Generator {
       buffer.writeln("    '$fieldName': FieldConfig<$primitiveType, $voType>(");
       buffer.writeln("      name: '$fieldName',");
       buffer.writeln("      valueConverter: $converter,");
-      // Nota: initialValue no se puede inferir aquí sin el entityLoader, 
-      // así que se usa null para no requerir un rawValue inexistente.
       buffer.writeln("      initialValue: null,"); 
       buffer.writeln('    ),');
     }
@@ -122,8 +121,6 @@ class FormKitGenerator extends Generator {
     // 2. MAPPER
     // --------------------------------------------------------------
 
-    // Nota: Este mapper no se usa en v12 si el VO ya está mapeando. 
-    // Lo simplificaremos para generar la DTO final.
     buffer.writeln('/// Mapper generado para $outputClassName (Uso interno de FormKit)');
     buffer.writeln('class $generatedMapperName implements $mapperContract {');
     buffer.writeln('  const $generatedMapperName();');
@@ -140,7 +137,6 @@ class FormKitGenerator extends Generator {
       final raw = "rawValue['$name']";
       final vo = info.voType;
 
-      // El Core Engine ya habrá convertido los valores al tipo VO.
       buffer.writeln('      $name: $raw as $vo,');
     }
 
@@ -168,19 +164,27 @@ class FormKitGenerator extends Generator {
       final name = field.name;
       final info = getVoInfo(field);
 
-      final ctype = 'FieldController<${info.primitiveType}, ${info.voType}>';
-
-      buffer.writeln('  $ctype get ${name}Controller {'); // Agregando sufijo 'Controller' para claridad
+      // Usar IFieldController o ITextFieldController si es un tipo primitivo común
+      String controllerType;
+      if (info.primitiveType.startsWith('String') || info.primitiveType.startsWith('int') || info.primitiveType.startsWith('double')) {
+          controllerType = 'ITextFieldController<${info.primitiveType}, ${info.voType}>';
+      } else {
+          controllerType = 'IFieldController<${info.primitiveType}, ${info.voType}>';
+      }
+      
+      buffer.writeln('  $controllerType get ${name}Controller {');
       buffer.writeln("    final controller = _controllerFactory.getController('$name');");
-      buffer.writeln('    if (controller is! $ctype) {');
-      buffer.writeln("      throw StateError('Controller $name is not type $ctype');");
+      buffer.writeln('    if (controller == null) {');
+      buffer.writeln("      throw StateError('Controller for field \'$name\' not found. Ensure the schema is registered.');");
       buffer.writeln('    }');
-      buffer.writeln('    return controller;');
+      buffer.writeln('    // El FieldController implementa ITextFieldController o IFieldController');
+      buffer.writeln('    return controller as $controllerType;');
       buffer.writeln('  }');
       buffer.writeln('');
     }
     
-    // Método simplificado para el BLoC (Punto 5.3)
+    // Método simplificado para el BLoC
+    buffer.writeln('  @override');
     buffer.writeln('  Future<$outputClassName?> validatedFlush() async {');
     buffer.writeln("    return _controllerFactory.validatedFlush<$outputClassName>();");
     buffer.writeln('  }');
