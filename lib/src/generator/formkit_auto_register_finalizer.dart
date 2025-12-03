@@ -1,6 +1,5 @@
 // ignore_for_file: depend_on_referenced_packages
 import 'package:build/build.dart';
-import 'package:flutter/foundation.dart';
 import 'package:formkit/src/generator/formkit_auto_register_collector.dart';
 import 'package:glob/glob.dart';
 
@@ -52,9 +51,7 @@ class FormKitAutoRegisterFinalizer extends Builder {
             });
           }
         } catch (e) {
-            if (kDebugMode) {
-              print('Error reading or parsing access reference file $assetId: $e');
-            }
+          log.severe('Error reading access reference from ${assetId.path}: $e');
         }
       }
     }
