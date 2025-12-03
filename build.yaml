@@ -1,0 +1,34 @@
+targets:
+  $default:
+    builders:
+      # Lógica de generación: Mapea la clase anotada a un esquema y un acceso.
+      formkit|formkit_mapper_builder:
+        enabled: true
+      # Lógica de consolidación: Escanea todos los .ref generados por el mapper.
+      formkit|formkit_auto_register_finalizer:
+        enabled: true
+        
+builders:
+  formkit_mapper_builder:
+    import: "package:formkit/builder.dart"
+    builder_factories: ["formKitMapperBuilder"]
+    build_extensions:
+      .dart: [".formkit_mapper.dart", ".formkit_access_ref"] # Genera 2 archivos por cada input
+    auto_apply: dependents
+    build_to: source
+    applies_builders: ["source_gen|combining_builder"]
+
+  formkit_auto_register_finalizer:
+    import: "package:formkit/builder.dart"
+    builder_factories: ["formKitAutoRegisterFinalizerBuilder"]
+    build_extensions:
+      r'$lib$': ["lib/formkit_auto_register.dart"] # Escribe el registro en el mismo paquete.
+    auto_apply: dependents
+    build_to: source
+    required_inputs: [".formkit_access_ref"] # Depende de los archivos generados por el mapper.
+
+post_process_builders:
+  formkit_auto_register_collector:
+    import: "package:formkit/builder.dart"
+    builder_factory: "formKitAutoRegisterBuilder"
+    input_extensions: [".formkit_access_ref"] # Consumido por el finalizer.
