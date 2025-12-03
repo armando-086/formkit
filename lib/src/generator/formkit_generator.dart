@@ -7,7 +7,7 @@ import 'package:source_gen/source_gen.dart';
 
 //. El TypeChecker debe usar la nueva anotación
 const _formKitTargetChecker = TypeChecker.fromUrl(
-  'package:formkit/src/annotation/formkit_target.dart#FormKitTarget',
+  'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget', 
 );
 
 class FormKitGenerator extends Generator {

@@ -10,7 +10,7 @@ targets:
         
 builders:
   formkit_mapper_builder:
-    import: "package:formkit/builder.dart"
+    import: "package:formkit/src/generator/build/formkit_mapper_builder.dart" # <--- RUTA CORREGIDA
     builder_factories: ["formKitMapperBuilder"]
     build_extensions:
       .dart: [".formkit_mapper.dart", ".formkit_access_ref"] # Genera 2 archivos por cada input
@@ -19,7 +19,7 @@ builders:
     applies_builders: ["source_gen|combining_builder"]
 
   formkit_auto_register_finalizer:
-    import: "package:formkit/builder.dart"
+    import: "package:formkit/src/generator/build/formkit_auto_register_finalizer_builder.dart" # <--- RUTA CORREGIDA
     builder_factories: ["formKitAutoRegisterFinalizerBuilder"]
     build_extensions:
       r'$lib$': ["lib/formkit_auto_register.dart"] # Escribe el registro en el mismo paquete.
@@ -29,6 +29,6 @@ builders:
 
 post_process_builders:
   formkit_auto_register_collector:
-    import: "package:formkit/builder.dart"
+    import: "package:formkit/src/generator/build/formkit_auto_register_builder.dart" # <--- RUTA CORREGIDA
     builder_factory: "formKitAutoRegisterBuilder"
     input_extensions: [".formkit_access_ref"] # Consumido por el finalizer.
