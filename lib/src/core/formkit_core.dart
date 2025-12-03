@@ -191,7 +191,7 @@ class FormKitCore implements IFormKitLocator {
 
   static Future<TOutputVO?> flush<TOutputVO>() async {
     // . Implementación real de FormKit para limpieza de formulario
-    return _factory.flush<TOutputVO>();
+    return _factory.validatedFlush<TOutputVO>();
   }
 
   // . Método estático para cargar la Entidad (soluciona error 'loadEntity').
