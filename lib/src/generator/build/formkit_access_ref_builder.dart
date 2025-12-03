@@ -4,7 +4,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
 
-// Anotación FormKitTarget. Usamos TypeChecker para la verificación.
+//. Anotación FormKitTarget. Usamos TypeChecker para la verificación.
 const formKitTargetChecker = TypeChecker.fromUrl(
   'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget',
 );
@@ -14,19 +14,18 @@ class FormKitAccessRefBuilder implements Builder {
 
   @override
   Map<String, List<String>> get buildExtensions => const {
-        // Indica que de un .dart se genera un .formkit_access_ref
         '.dart': ['.formkit_access_ref'],
       };
 
   @override
   Future<void> build(BuildStep buildStep) async {
-    // Solo procesamos archivos .dart
+    //. Solo procesamos archivos .dart
     if (!buildStep.inputId.path.endsWith('.dart')) {
       return;
     }
 
     final resolver = buildStep.resolver;
-    // Verifica si es parte de una biblioteca Dart (esencial para el análisis)
+    //. Verifica si es parte de una biblioteca Dart (esencial para el análisis)
     if (!await resolver.isLibrary(buildStep.inputId)) {
       return;
     }
@@ -34,7 +33,7 @@ class FormKitAccessRefBuilder implements Builder {
     final unit = await resolver.compilationUnitFor(buildStep.inputId);
     final topLevelDeclarations = unit.declarations;
     
-    // Buscar todas las clases anotadas con FormKitTarget
+    //. Buscar todas las clases anotadas con FormKitTarget
     for (final element in topLevelDeclarations) {
       if (element is ClassElement) {
 
@@ -50,17 +49,17 @@ class FormKitAccessRefBuilder implements Builder {
               ? inputPath.substring(4)
               : inputPath;
 
-          // Contenido del archivo .formkit_access_ref
+          //. Contenido del archivo .formkit_access_ref
           final ref = StringBuffer();
           ref.writeln('FormKitAccess:$generatedAccessName');
           ref.writeln('Entity:$outputClassName');
           ref.writeln('Path:$relativePath');
 
-          // Escribir el nuevo Asset (Archivo .formkit_access_ref)
+          //. Escribir el nuevo Asset (Archivo .formkit_access_ref)
           final outputId = buildStep.inputId.changeExtension('.formkit_access_ref');
           await buildStep.writeAsString(outputId, ref.toString());
           
-          // Ya encontramos la clase, podemos salir del bucle.
+          //. Ya encontramos la clase, podemos salir del bucle.
           return; 
         }
       }

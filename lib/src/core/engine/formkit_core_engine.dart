@@ -84,11 +84,10 @@ class FormKitCoreEngine<TEntity> implements IFormController<TEntity> {
   // . =======================================================================
   // . Implementación de IFormController (Método validatedFlush)
   // . =======================================================================
-  /// Implementa la lógica unificada de validación (asíncrona y síncrona) y mapeo (validación de dominio).
+  //. Implementa la lógica unificada de validación (asíncrona y síncrona) y mapeo (validación de dominio).
   @override
   Future<void> validatedFlush<TOutputVO>() async {
     // 1. Ejecutar validación asíncrona en todos los campos y esperar a que terminen.
-    //    Se asume que IFormValidatorService expone este método para la orquestación de Forms.
     await _validatorService.runAllAsyncValidation(_rootNode);
 
     // 2. Ejecutar validación síncrona/UI (incluyendo resultados de la validación asíncrona recién terminada).
@@ -103,11 +102,9 @@ class FormKitCoreEngine<TEntity> implements IFormController<TEntity> {
 
     try {
       // 4. Ejecutar el mapeo de dominio. El resultado se ignora (Future<void>),
-      //    pero la ejecución se realiza para capturar ValueFailureException (validación de dominio).
       _mapper.map(_rootNode);
     } on ValueFailureException catch (e) {
       // 5. Si falla la validación de dominio (ValueFailureException),
-      //    se traduce el error y se notifica al campo correspondiente (Binder/Store).
       final String uiErrorMsg = _errorTranslator.translate(e.valueFailure);
       final IFieldBinder? binder = _fieldBinders[e.fieldName];
       if (binder != null) {
@@ -116,7 +113,6 @@ class FormKitCoreEngine<TEntity> implements IFormController<TEntity> {
         final IFormNode? fieldNode =
             _walker.findNodeByName(_rootNode, e.fieldName);
         if (fieldNode is FieldNode) {
-          // Asumiendo que FieldNode tiene acceso al orchestrator y su stateStore
           fieldNode.fieldOrchestrator.stateStore.setValidation(
             isValid: false,
             errorMsg: uiErrorMsg,
