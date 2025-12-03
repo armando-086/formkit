@@ -1,23 +1,23 @@
 // ignore_for_file: depend_on_referenced_packages, unnecessary_import
-
-import 'package:build/build.dart';
+import 'dart:async'; 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart'; // Contiene TypeChecker, InvalidGenerationSourceError, GeneratorForAnnotation, ConstantReader
-import 'package:formkit/src/generator/annotation/formkit_target.dart';
+import 'package:build/build.dart';
+import 'package:source_gen/source_gen.dart'; 
+import 'package:formkit/src/generator/annotation/formkit_target.dart'; 
 import 'package:formkit/src/generator/utils/get_vo_info.dart';
 import 'package:formkit/src/generator/utils/field_info.dart';
+import 'package:formkit/formkit.dart'; 
 
 
 const formKitTargetChecker = TypeChecker.fromUrl(
   'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget',
 );
 
-
+/// Generador principal de FormKit.
 class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
   const FormKitGenerator();
 
   @override
-  // ✅ CORREGIDO: Uso de la firma correcta para GeneratorForAnnotation
   Future<String> generateForAnnotatedElement(
     Element element,
     ConstantReader annotation,
@@ -93,7 +93,7 @@ class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
 
     for (final field in fields) {
       final fieldName = field.name;
-      final FieldInfo info = getVoInfo(field); // Asume que getVoInfo está corregido (ver abajo)
+      final FieldInfo info = getVoInfo(field); 
 
       final String converter;
       final String voType = info.voType;
@@ -164,7 +164,6 @@ class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
       final name = field.name;
       final info = getVoInfo(field);
 
-      // Usar IFieldController o ITextFieldController si es un tipo primitivo común
       String controllerType;
       if (info.primitiveType.startsWith('String') || info.primitiveType.startsWith('int') || info.primitiveType.startsWith('double')) {
           controllerType = 'ITextFieldController<${info.primitiveType}, ${info.voType}>';
@@ -177,7 +176,6 @@ class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
       buffer.writeln('    if (controller == null) {');
       buffer.writeln("      throw StateError('Controller for field \'$name\' not found. Ensure the schema is registered.');");
       buffer.writeln('    }');
-      buffer.writeln('    // El FieldController implementa ITextFieldController o IFieldController');
       buffer.writeln('    return controller as $controllerType;');
       buffer.writeln('  }');
       buffer.writeln('');
@@ -204,17 +202,8 @@ class FormKitGenerator extends GeneratorForAnnotation<FormKitTarget> {
     buffer.writeln('');
 
     // --------------------------------------------------------------
-    // 4. .formkit_access_ref (Para el auto-registro)
+    // 4. .formkit_access_ref (Lógica ELIMINADA y movida a un nuevo builder)
     // --------------------------------------------------------------
-
-    final refId = buildStep.inputId.changeExtension('.formkit_access_ref');
-
-    final ref = StringBuffer();
-    ref.writeln('FormKitAccess:$generatedAccessName');
-    ref.writeln('Entity:$outputClassName');
-    ref.writeln('Path:$relativePath');
-
-    await buildStep.writeAsString(refId, ref.toString());
 
     return buffer.toString();
   }

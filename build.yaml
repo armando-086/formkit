@@ -1,8 +1,10 @@
 targets:
   $default:
     builders:
-      # Lógica de generación: Mapea la clase anotada a un esquema y un acceso.
+      # Lógica de generación de Configuración, Mapper y Accessor
       formkit|formkit_mapper_builder:
+        enabled: true
+      formkit|formkit_access_ref_builder:
         enabled: true
       # Lógica de consolidación: Escanea todos los .ref generados por el mapper.
       formkit|formkit_auto_register_finalizer:
@@ -12,14 +14,20 @@ builders:
   formkit_mapper_builder:
     import: "package:formkit/src/generator/build/formkit_mapper_builder.dart"
     builder_factories: ["formKitMapperBuilder"]
-    # ✅ CORRECCIÓN CRÍTICA: Solo se espera una extensión de salida (el archivo .dart generado).
-    # El archivo .formkit_access_ref es un archivo intermedio que el CombiningBuilder no debe procesar.
     build_extensions:
       .dart: [".formkit_mapper.dart"] 
     auto_apply: dependents
     build_to: source
-    # La aplicación de source_gen es la que se encarga de la salida .dart
-    applies_builders: ["source_gen|combining_builder"] 
+    applies_builders: ["source_gen|combining_builder"] # Se mantiene para source_gen
+
+  formkit_access_ref_builder:
+    import: "package:formkit/src/generator/build/formkit_access_ref_builder_factory.dart" # Ajuste esta ruta
+    builder_factories: ["formKitAccessRefBuilder"]
+    build_extensions:
+      # Este builder genera el archivo de referencia que consume el finalizador
+      .dart: [".formkit_access_ref"] 
+    auto_apply: dependents
+    build_to: source
 
   formkit_auto_register_finalizer:
     import: "package:formkit/src/generator/build/formkit_auto_register_finalizer_builder.dart"
