@@ -2,42 +2,68 @@
 import 'package:build/build.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:formkit/src/generator/annotation/formkit_target.dart';
 
+
+// Anotación FormKitTarget. Usamos TypeChecker para la verificación.
 const formKitTargetChecker = TypeChecker.fromUrl(
   'package:formkit/src/generator/annotation/formkit_target.dart#FormKitTarget',
 );
 
-class FormKitAccessRefBuilder extends GeneratorForAnnotation<FormKitTarget> {
+class FormKitAccessRefBuilder implements Builder {
   const FormKitAccessRefBuilder();
 
   @override
-  Future<String> generateForAnnotatedElement(
-    Element element,
-    ConstantReader annotation,
-    BuildStep buildStep,
-  ) async {
-    if (element is! ClassElement) {
-      return '';
+  Map<String, List<String>> get buildExtensions => const {
+        // Indica que de un .dart se genera un .formkit_access_ref
+        '.dart': ['.formkit_access_ref'],
+      };
+
+  @override
+  Future<void> build(BuildStep buildStep) async {
+    // Solo procesamos archivos .dart
+    if (!buildStep.inputId.path.endsWith('.dart')) {
+      return;
     }
 
-    final ClassElement outputClass = element;
-    final String? outputClassName = outputClass.name;
-    final String generatedAccessName = '${outputClassName}FormKit';
+    final resolver = buildStep.resolver;
+    // Verifica si es parte de una biblioteca Dart (esencial para el análisis)
+    if (!await resolver.isLibrary(buildStep.inputId)) {
+      return;
+    }
 
-    // Importar entidad original (calculando el path)
-    final inputPath = buildStep.inputId.path;
-    final relativePath = inputPath.startsWith('lib/')
-        ? inputPath.substring(4)
-        : inputPath;
-
-    // Escribir el contenido del archivo de referencia (este es el output)
-    final ref = StringBuffer();
-    ref.writeln('FormKitAccess:$generatedAccessName');
-    ref.writeln('Entity:$outputClassName');
-    ref.writeln('Path:$relativePath');
+    final unit = await resolver.compilationUnitFor(buildStep.inputId);
+    final topLevelDeclarations = unit.declarations;
     
-    // Devolver el contenido. SourceGen se encarga de escribir el archivo.
-    return ref.toString(); 
+    // Buscar todas las clases anotadas con FormKitTarget
+    for (final element in topLevelDeclarations) {
+      if (element is ClassElement) {
+
+        final ClassElement outputClass = element as ClassElement;
+        
+        if (formKitTargetChecker.hasAnnotationOfExact(outputClass)) {
+          
+          final String? outputClassName = outputClass.name;
+          final String generatedAccessName = '${outputClassName}FormKit';
+          
+          final inputPath = buildStep.inputId.path;
+          final relativePath = inputPath.startsWith('lib/')
+              ? inputPath.substring(4)
+              : inputPath;
+
+          // Contenido del archivo .formkit_access_ref
+          final ref = StringBuffer();
+          ref.writeln('FormKitAccess:$generatedAccessName');
+          ref.writeln('Entity:$outputClassName');
+          ref.writeln('Path:$relativePath');
+
+          // Escribir el nuevo Asset (Archivo .formkit_access_ref)
+          final outputId = buildStep.inputId.changeExtension('.formkit_access_ref');
+          await buildStep.writeAsString(outputId, ref.toString());
+          
+          // Ya encontramos la clase, podemos salir del bucle.
+          return; 
+        }
+      }
+    }
   }
 }

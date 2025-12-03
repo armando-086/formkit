@@ -4,9 +4,10 @@ targets:
       # Lógica de generación de Configuración, Mapper y Accessor
       formkit|formkit_mapper_builder:
         enabled: true
+      # ✅ BUILDER DE REFERENCIA MODIFICADO
       formkit|formkit_access_ref_builder:
         enabled: true
-      # Lógica de consolidación: Escanea todos los .ref generados por el mapper.
+      # Lógica de consolidación
       formkit|formkit_auto_register_finalizer:
         enabled: true
         
@@ -18,13 +19,15 @@ builders:
       .dart: [".formkit_mapper.dart"] 
     auto_apply: dependents
     build_to: source
-    applies_builders: ["source_gen|combining_builder"] # Se mantiene para source_gen
+    # Se mantiene source_gen para el archivo .dart principal
+    applies_builders: ["source_gen|combining_builder"] 
 
+  # ✅ CAMBIO CRÍTICO: Usa el nuevo Custom Builder
   formkit_access_ref_builder:
-    import: "package:formkit/src/generator/build/formkit_access_ref_builder_factory.dart" # Ajuste esta ruta
+    # Apunta al archivo que ahora contiene la fábrica y el builder
+    import: "package:formkit/src/generator/build/formkit_access_ref_builder.dart" 
     builder_factories: ["formKitAccessRefBuilder"]
     build_extensions:
-      # Este builder genera el archivo de referencia que consume el finalizador
       .dart: [".formkit_access_ref"] 
     auto_apply: dependents
     build_to: source
