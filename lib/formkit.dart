@@ -53,7 +53,7 @@ export 'src/reactive/contract/i_reactive_engine.dart';
 //. -------------------------------------------------------------------------
 //. 3b. Code Generation: Anotaciones y Builder
 //. -------------------------------------------------------------------------
-export 'src/generator/annotation/formkit_target.dart' show FormKitTarget;
+export 'src/annotation/formkit_target.dart' show FormKitTarget;
 
 //. -------------------------------------------------------------------------
 //. 4. Exceptions

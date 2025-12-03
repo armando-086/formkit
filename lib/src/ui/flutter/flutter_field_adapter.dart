@@ -4,12 +4,6 @@ import 'package:formkit/src/node/orchestrator/field_orchestrator.dart';
 import 'package:formkit/src/state/contracts/i_state.dart';
 import 'package:formkit/src/ui/contracts/i_field_binder.dart';
 
-//. =============================================================
-//. Adaptador que enlaza FieldOrchestrator con los Widgets de Flutter.
-//. Implementa IFieldBinder<P>.
-//. P: Tipo Primitivo de entrada (Input).
-//. V: Tipo de Valor Final procesado (Output).
-//. =============================================================
 class FlutterFieldAdapter<P, V> implements IFieldBinder {
   @override
   final String name;  
